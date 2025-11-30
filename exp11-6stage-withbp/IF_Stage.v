@@ -11,7 +11,7 @@ module IF_Stage(
     input  wire                        fs_flush,
     // allowin
     input  wire                        ds_allowin,
-    input  wire                        fs_allowin,
+    output wire                        fs_allowin,
     // outputs
     output wire                        fs_to_ds_valid,
     output wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus,
