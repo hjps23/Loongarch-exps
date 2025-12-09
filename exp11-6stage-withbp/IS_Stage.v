@@ -119,7 +119,7 @@ module IS_Stage(
         .allowin_o                      (IQ_allowin),
         .line1_now_valid_o              (IQ_line1_valid_o),
         .line2_now_valid_o              (IQ_line2_valid_o),
-        .flush_i                        (IQ_flush || is_flush),
+        .flush_i                        (IQ_flush || is_flush || bp_flush),
         .double_valid_inst_lunch_flag_i (1'b0),  
         .single_valid_inst_lunch_flag_i (is_allowin),
         .zero_valid_inst_lunch_flag_i   (1'b0),
@@ -273,7 +273,7 @@ module IS_Stage(
         if (reset) begin
             is_valid <= 1'b0;
         end
-        else if(branch_taken_unwtr || bp_flush) begin
+        else if(branch_taken_unwtr) begin
             is_valid <= 1'b0;
         end 
         else if(is_allowin) begin
