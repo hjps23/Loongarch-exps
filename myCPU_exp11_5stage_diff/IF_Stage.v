@@ -1,0 +1,70 @@
+`include "myCPU.vh"
+module IF_Stage(
+    input  wire                        clk,
+    input  wire                        reset,
+    // branch 
+    input  wire [`BR_BUS -1:0]         br_bus,
+    // from hazard detection
+    input  wire                        fs_stall,
+    input  wire                        fs_flush,
+    // allowin
+    input  wire                        ds_allowin,
+    output wire                        fs_allowin,
+    // outputs
+    output wire                        fs_to_ds_valid,
+    output wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus,
+    // inst sram interface
+    output wire                        inst_sram_en,
+    output wire [ 3:0]                 inst_sram_we,
+    output wire [31:0]                 inst_sram_addr,
+    output wire [31:0]                 inst_sram_wdata,
+    input  wire [31:0]                 inst_sram_rdata
+);
+
+    reg  fs_valid;
+    wire fs_ready_go;
+    wire br_taken;
+    wire [31:0] br_target;
+    
+    reg  [31:0] fs_pc;
+    wire [31:0] seq_pc;
+    wire [31:0] nextpc;
+
+    assign {br_taken,
+            br_target} = br_bus;
+    
+    assign fs_ready_go = ~fs_stall; 
+    assign fs_allowin  = !fs_valid || (fs_ready_go && ds_allowin);
+    assign fs_to_ds_valid = fs_valid && fs_ready_go && ~fs_flush;
+
+    assign seq_pc = fs_pc + 32'h4;
+    assign nextpc = br_taken ? br_target : seq_pc;
+
+    assign fs_to_ds_bus = {inst_sram_rdata,  // 63:32
+                           fs_pc            // 31:0
+                          };
+
+    assign inst_sram_en    = fs_allowin && ~reset;
+    assign inst_sram_we    = 4'h0;
+    assign inst_sram_addr  = fs_pc;
+    assign inst_sram_wdata = 32'b0;
+
+    
+    always @(posedge clk) begin
+        if (reset) begin
+            fs_valid <= 1'b1;
+        end else if (fs_allowin || fs_flush) begin
+            fs_valid <= 1'b1;
+        end
+    end
+
+    always @(posedge clk) begin
+        if (reset) begin
+            fs_pc <= 32'h80000000; 
+        end else if (fs_allowin || fs_flush) begin
+            fs_pc <= nextpc;       
+        end
+        
+    end
+
+endmodule
